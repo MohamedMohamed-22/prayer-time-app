@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prayer Time Checker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .card {
+      background-color: rgba(255,255,255,0.1);
+      border: none;
+      color: white;
+    }
+    .card h5 {
+      color: #00ffff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5 text-center">
+    <h1 class="mb-4">🕌 Daily Prayer Times</h1>
+    <p id="location" class="mb-4"></p>
+    <div id="prayer-times" class="row g-4 justify-content-center"></div>
+    <p class="mt-5 small">Powered by <a href="https://aladhan.com/prayer-times-api" target="_blank" class="text-info">Aladhan API</a></p>
+  </div>
+
+  <script>
+    async function fetchPrayerTimes(lat, lon) {
+      const today = Math.floor(Date.now() / 1000);
+      const url = `https://api.aladhan.com/v1/timings/${today}?latitude=${lat}&longitude=${lon}&method=2`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const timings = data.data.timings;
+        const location = data.data.meta.timezone;
+
+        document.getElementById("location").innerText = "Location: " + location;
+
+        const container = document.getElementById("prayer-times");
+        container.innerHTML = "";
+        for (const [prayer, time] of Object.entries(timings)) {
+          const div = document.createElement("div");
+          div.className = "col-6 col-md-4 col-lg-3";
+          div.innerHTML = `
+            <div class="card p-3">
+              <h5>${prayer}</h5>
+              <p class="mb-0">${time}</p>
+            </div>`;
+          container.appendChild(div);
+        }
+      } catch (err) {
+        alert("Failed to fetch prayer times.");
+      }
+    }
+
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            fetchPrayerTimes(position.coords.latitude, position.coords.longitude);
+          },
+          () => {
+            alert("Please allow location access to show prayer times.");
+          }
+        );
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
+    }
+
+    getLocation();
+  </script>
+</body>
+</html>
